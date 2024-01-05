@@ -1,0 +1,122 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <ctype.h>
+
+#define MAX_SIZE 100
+
+// Structure to represent the stack
+typedef struct {
+    char data[MAX_SIZE];
+    int top;
+} Stack;
+
+// Function to initialize the stack
+void initialize(Stack *stack) {
+    stack->top = -1;
+}
+
+// Function to check if the stack is empty
+int isEmpty(Stack *stack) {
+    return (stack->top == -1);
+}
+
+// Function to check if the stack is full
+int isFull(Stack *stack) {
+    return (stack->top == MAX_SIZE - 1);
+}
+
+// Function to push a character onto the stack
+void push(Stack *stack, char element) {
+    if (isFull(stack)) {
+        printf("Stack Overflow: Cannot push %c, stack is full.\n", element);
+        exit(EXIT_FAILURE);
+    }
+
+    stack->data[++(stack->top)] = element;
+}
+
+// Function to pop a character from the stack
+char pop(Stack *stack) {
+    if (isEmpty(stack)) {
+        printf("Stack Underflow: Cannot pop, stack is empty.\n");
+        exit(EXIT_FAILURE);
+    }
+
+    return stack->data[stack->top--];
+}
+
+// Function to get the precedence of an operator
+int getPrecedence(char operator) {
+    switch (operator) {
+        case '+':
+        case '-':
+            return 1;
+        case '*':
+        case '/':
+            return 2;
+        case '^':
+            return 3;
+        default:
+            return 0;
+    }
+}
+
+// Function to convert infix expression to postfix expression
+void infixToPostfix(char infix[], char postfix[]) {
+    Stack stack;
+    initialize(&stack);
+
+    int i = 0;  // Index for the infix expression
+    int j = 0;  // Index for the postfix expression
+
+    while (infix[i] != '\0') {
+        char currentSymbol = infix[i];
+
+        if (isalnum(currentSymbol)) {
+            // If the current symbol is an operand, add it to the postfix expression
+            postfix[j++] = currentSymbol;
+        } else if (currentSymbol == '(') {
+            // If the current symbol is an open parenthesis, push it onto the stack
+            push(&stack, currentSymbol);
+        } else if (currentSymbol == ')') {
+            // If the current symbol is a close parenthesis, pop operators from the stack
+            // and add them to the postfix expression until an open parenthesis is encountered
+            while (!isEmpty(&stack) && stack.data[stack.top] != '(') {
+                postfix[j++] = pop(&stack);
+            }
+            pop(&stack);  // Pop the open parenthesis from the stack
+        } else {
+            // If the current symbol is an operator
+            while (!isEmpty(&stack) && getPrecedence(currentSymbol) <= getPrecedence(stack.data[stack.top])) {
+                // Pop operators from the stack and add them to the postfix expression
+                // until the stack is empty or an operator with lower precedence is encountered
+                postfix[j++] = pop(&stack);
+            }
+            // Push the current operator onto the stack
+            push(&stack, currentSymbol);
+        }
+
+        i++;  // Move to the next character in the infix expression
+    }
+
+    // Pop any remaining operators from the stack and add them to the postfix expression
+    while (!isEmpty(&stack)) {
+        postfix[j++] = pop(&stack);
+    }
+
+    postfix[j] = '\0';  // Null-terminate the postfix expression
+}
+
+int main() {
+    char infix[MAX_SIZE];
+    char postfix[MAX_SIZE];
+
+    printf("Enter an infix expression: ");
+    scanf("%s", infix);
+
+    infixToPostfix(infix, postfix);
+
+    printf("Postfix expression: %s\n", postfix);
+
+    return 0;
+}
